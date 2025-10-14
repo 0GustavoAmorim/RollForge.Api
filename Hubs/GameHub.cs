@@ -26,7 +26,7 @@ public class GameHub : Hub
         {
             _sessionService.AddPlayer(sessionId, playerName);
             await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
-            await Clients.Group(sessionId).SendAsync("Player", playerName, "entrou na sessão.");
+            await Clients.Group(sessionId).SendAsync("PlayerJoined", "Player", playerName, "entrou na sessão.");
         }
         catch (InvalidOperationException ex)
         {
@@ -34,7 +34,7 @@ public class GameHub : Hub
         }
     }
 
-    public async Task RollDice(string sessionId, string playerName, DiceTypeEnum dice)
+    public async Task<Roll> RollDice(string sessionId, string playerName, DiceTypeEnum dice)
     {
         var sides = (int)dice;
         var result = new Random().Next(1, sides + 1);
@@ -48,8 +48,16 @@ public class GameHub : Hub
         };
 
         _sessionService.AddRoll(sessionId, roll);
-        
+
         await Clients.Group(sessionId)
-            .SendAsync(playerName, ": rolou", dice.ToString(), "e tirou = ", result);
+            .SendAsync("DiceRolled",  new
+            {
+                player = roll.Player,
+                dice = roll.Dice,
+                result = roll.Result,
+                timestamp = roll.Timestamp
+            });
+
+        return roll;
     }
 }
