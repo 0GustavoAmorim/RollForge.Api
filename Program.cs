@@ -66,7 +66,7 @@ app.MapPost("/session/{id}/join", (SessionService sessionService, string id, Pla
     return Results.Ok(session);
 });
 
-app.MapPost("/session/{id}/roll", async(SessionService sessionService,DiceService diceService, IHubContext<GameHub> hub, string id, RollRequest req) =>
+app.MapPost("/session/{id}/roll", async (SessionService sessionService, DiceService diceService, IHubContext<GameHub> hub, string id, RollRequest req) =>
 {
     var session = sessionService.GetSession(id);
     if (session is null)
@@ -82,6 +82,54 @@ app.MapPost("/session/{id}/roll", async(SessionService sessionService,DiceServic
     return Results.Ok(roll);
 });
 
+app.MapPost("/session/{id}/leave", async (SessionService sessionService, IHubContext<GameHub> Hub, string id, Player player) =>
+{
+    var session = sessionService.GetSession(id);
+    if (session is null)
+        return Results.NotFound("Sessão não encontrada.");
+
+    sessionService.RemovePlayer(id, player.Name);
+    await Hub.Clients.Group(id).SendAsync("PlayerLeft", new
+    {
+        player = player.Name,
+        message = $"{player.Name} saiu da sessão.",
+    });
+
+    if (!sessionService.SessionExists(id))
+    {
+        await Hub.Clients.Group(id).SendAsync("SessionEnded", new
+        {
+            sessionId = id,
+            message = $"Sessão {session.Name} encerrada (sem jogadores).",
+        });
+
+        return Results.Ok(new
+        {
+            message = $"jogador {player.Name} saiu. Sessão encerrada automagicamente."
+        });
+    }
+
+    return Results.Ok(new
+    {
+        message = $"jogador {player.Name} saiu."
+    });
+});
+
+app.MapDelete("session/{id}", async (SessionService sessionService, IHubContext<GameHub> Hub, string id) =>
+{
+    var session = sessionService.GetSession(id);
+    if (session is null)
+        return Results.NotFound("Sessão não encontrada.");
+
+    sessionService.RemoveSession(id);
+    await Hub.Clients.Group(id).SendAsync("SessionEnded", new
+    {
+        sessionId = id,
+        message = $"Sessão {session.Name} encerrada manualmente.",
+    });
+
+    return Results.NoContent();
+});
 
 app.MapHub<GameHub>("/hub/game");
 
