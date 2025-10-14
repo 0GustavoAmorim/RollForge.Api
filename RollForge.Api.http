@@ -1,0 +1,6 @@
+@RollForge.Api_HostAddress = http://localhost:5180
+
+GET {{RollForge.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

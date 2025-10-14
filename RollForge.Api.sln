@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RollForge.Api", "RollForge.Api.csproj", "{5339A17C-E375-AFA3-74D9-B857E2AFAA73}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5339A17C-E375-AFA3-74D9-B857E2AFAA73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5339A17C-E375-AFA3-74D9-B857E2AFAA73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5339A17C-E375-AFA3-74D9-B857E2AFAA73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5339A17C-E375-AFA3-74D9-B857E2AFAA73}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A18BA167-91F7-4E25-B501-18B8C9D86343}
+	EndGlobalSection
+EndGlobal
