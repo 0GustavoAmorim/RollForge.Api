@@ -1,5 +1,5 @@
 # RollForge.Api
-Backend em .NET 8 + SignalR para sessões de RPG e rolagens de dados em tempo real.
+Backend em .NET 9 + SignalR para sessões de RPG e rolagens de dados em tempo real.
 
 ---
 
