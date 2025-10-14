@@ -46,15 +46,35 @@ namespace RollForge.Api.Services
 
         public void AddRoll(string sessionId, Roll roll)
         {
-            if(_sessions.TryGetValue(sessionId, out var session))
+            if (_sessions.TryGetValue(sessionId, out var session))
             {
                 session.Rolls.Add(roll);
+            }
+        }
+        
+        public void RemovePlayer(string sessionId, string playerName)
+        {
+            if (_sessions.TryGetValue(sessionId, out var session))
+            {
+                var player = session.Players
+                    .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+
+                if (player != null)
+                    session.Players.Remove(player);
+
+                if (!session.Players.Any())
+                    RemoveSession(sessionId);
             }
         }
 
         public void RemoveSession(string sessionId)
         {
             _sessions.TryRemove(sessionId, out _);
+        }
+
+        public bool SessionExists(string sessionId)
+        {
+            return _sessions.ContainsKey(sessionId);
         }
     }
 }

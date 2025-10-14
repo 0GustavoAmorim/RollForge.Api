@@ -18,7 +18,10 @@ public class GameHub : Hub
         var session = _sessionService.GetSession(sessionId);
         if (session is null)
         {
-            await Clients.Caller.SendAsync("Error", "Sessão não encontrada.");
+            await Clients.Caller.SendAsync("Error", new
+            {
+                message = "Sessão não encontrada."
+            });
             return;
         }
 
@@ -26,38 +29,18 @@ public class GameHub : Hub
         {
             _sessionService.AddPlayer(sessionId, playerName);
             await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
-            await Clients.Group(sessionId).SendAsync("PlayerJoined", "Player", playerName, "entrou na sessão.");
+            await Clients.Group(sessionId).SendAsync("PlayerJoined", new
+            {
+                player = playerName,
+                message = $"{playerName} entrou na sessão.",
+            });
         }
         catch (InvalidOperationException ex)
         {
-            throw new HubException(ex.Message);
-        }
-    }
-
-    public async Task<Roll> RollDice(string sessionId, string playerName, DiceTypeEnum dice)
-    {
-        var sides = (int)dice;
-        var result = new Random().Next(1, sides + 1);
-
-        var roll = new Roll
-        {
-            Player = playerName,
-            Dice = dice,
-            Result = result,
-            Timestamp = DateTime.UtcNow
-        };
-
-        _sessionService.AddRoll(sessionId, roll);
-
-        await Clients.Group(sessionId)
-            .SendAsync("DiceRolled",  new
+            await Clients.Caller.SendAsync("Error", new
             {
-                player = roll.Player,
-                dice = roll.Dice,
-                result = roll.Result,
-                timestamp = roll.Timestamp
+                message = ex.Message
             });
-
-        return roll;
+        }
     }
 }
