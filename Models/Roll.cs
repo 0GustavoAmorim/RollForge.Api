@@ -8,7 +8,7 @@ namespace RollForge.Api.Models
     public class Roll
     {
         public string Player { get; set; } = string.Empty;
-        public string Dice { get; set; } = string.Empty;
+        public DiceTypeEnum Dice { get; set; }
         public int Result { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }

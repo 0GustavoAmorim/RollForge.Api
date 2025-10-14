@@ -18,7 +18,8 @@ public class GameHub : Hub
         var session = _sessionService.GetSession(sessionId);
         if (session is null)
         {
-            throw new HubException("Sessão não encontrada.");
+            await Clients.Caller.SendAsync("Error", "Sessão não encontrada.");
+            return;
         }
 
         try
@@ -33,31 +34,22 @@ public class GameHub : Hub
         }
     }
 
-    public async Task RollDice(string sessionId, string playerName, string diceType)
+    public async Task RollDice(string sessionId, string playerName, DiceTypeEnum dice)
     {
-        var sides = GetDiceSides(diceType);
+        var sides = (int)dice;
         var result = new Random().Next(1, sides + 1);
 
         var roll = new Roll
         {
             Player = playerName,
-            Dice = diceType,
+            Dice = dice,
             Result = result,
             Timestamp = DateTime.UtcNow
         };
 
         _sessionService.AddRoll(sessionId, roll);
-        await Clients.Group(sessionId).SendAsync(playerName, ": rolou", diceType, "e tirou = ", result);
+        
+        await Clients.Group(sessionId)
+            .SendAsync(playerName, ": rolou", dice.ToString(), "e tirou = ", result);
     }
-
-    private static int GetDiceSides(string diceType) => diceType.ToLower() switch
-    {
-        "d4" => 4,
-        "d6" => 6,
-        "d8" => 8,
-        "d10" => 10,
-        "d12" => 12,
-        "d20" => 20,
-        _ => 20
-    };
 }
