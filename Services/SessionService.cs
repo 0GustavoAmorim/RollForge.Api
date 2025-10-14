@@ -44,6 +44,14 @@ namespace RollForge.Api.Services
             throw new KeyNotFoundException("Sessão não encontrada.");
         }
 
+        public void AddRoll(string sessionId, Roll roll)
+        {
+            if(_sessions.TryGetValue(sessionId, out var session))
+            {
+                session.Rolls.Add(roll);
+            }
+        }
+
         public void RemoveSession(string sessionId)
         {
             _sessions.TryRemove(sessionId, out _);
