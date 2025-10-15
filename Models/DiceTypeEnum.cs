@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace RollForge.Api.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DiceTypeEnum
     {
         D4 = 4,

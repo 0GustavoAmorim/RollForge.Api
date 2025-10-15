@@ -24,12 +24,14 @@ builder.Services.AddCors(op =>
         p.AllowAnyHeader()
          .AllowAnyMethod()
          .AllowCredentials()
-         .WithOrigins("http://localhost:5180");
+         .WithOrigins("http://localhost:5173");
     });
 });
 
 
 var app = builder.Build();
+
+app.UseCors("Allowfrontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -72,10 +74,10 @@ app.MapPost("/session/{id}/roll", async (SessionService sessionService, DiceServ
     if (session is null)
         return Results.NotFound("Sessão não encontrada.");
 
-    if (string.IsNullOrWhiteSpace(req.Player))
+    if (string.IsNullOrWhiteSpace(req.Name))
         return Results.BadRequest("Nome do jogador é obrigatório.");
 
-    var roll = await diceService.RollDice(id, req.Player, req.Dice);
+    var roll = await diceService.RollDice(id, req.Name, req.Dice);
 
     await hub.Clients.Group(id).SendAsync("RollResult", roll);
 

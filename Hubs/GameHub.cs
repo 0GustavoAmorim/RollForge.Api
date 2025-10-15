@@ -15,31 +15,39 @@ public class GameHub : Hub
 
     public async Task JoinSession(string sessionId, string playerName)
     {
-        var session = _sessionService.GetSession(sessionId);
-        if (session is null)
+        if (string.IsNullOrWhiteSpace(playerName))
         {
-            await Clients.Caller.SendAsync("Error", new
-            {
-                message = "Sessão não encontrada."
-            });
+            await Clients.Caller.SendAsync("Error", new { message = "Nome do jogador não pode ser vazio." });
             return;
         }
 
-        try
+        var session = _sessionService.GetSession(sessionId);
+        if (session is null)
         {
-            _sessionService.AddPlayer(sessionId, playerName);
-            await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
+            await Clients.Caller.SendAsync("Error", new { message = "Sessão não encontrada." });
+            return;
+        }
+
+        bool alreadyInSession = session.Players.Any(p =>
+            p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
+
+        if (alreadyInSession)
+        {
+            await Clients.Group(sessionId).SendAsync("PlayerReconnected", new
+            {
+                player = playerName,
+                message = $"{playerName} reconectou à sessão."
+            });
+        }
+        else
+        {
+            _sessionService.AddPlayer(sessionId, playerName); // 🔥 só se ainda não existir
             await Clients.Group(sessionId).SendAsync("PlayerJoined", new
             {
                 player = playerName,
-                message = $"{playerName} entrou na sessão.",
-            });
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Clients.Caller.SendAsync("Error", new
-            {
-                message = ex.Message
+                message = $"{playerName} entrou na sessão."
             });
         }
     }

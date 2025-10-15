@@ -13,8 +13,15 @@ namespace RollForge.Api.Services
 
         public Session CreateSession(string name)
         {
-            var session = new Session { Name = name };
-            _sessions[session.Id] = session;
+            var session = new Session
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                Players = new List<Player>(),
+                Rolls = new List<Roll>()
+            };
+
+            _sessions.TryAdd(session.Id, session);
             return session;
         }
 
@@ -26,22 +33,21 @@ namespace RollForge.Api.Services
 
         public void AddPlayer(string sessionId, string playerName)
         {
-            if (_sessions.TryGetValue(sessionId, out var session))
-            {
-                if (session.Players.Any(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new InvalidOperationException("Player com o mesmo nome já existe na sessão.");
-                }
+            if (!_sessions.TryGetValue(sessionId, out var session))
+                throw new KeyNotFoundException("Sessão não encontrada.");
 
-                if (session.Players.Count >= 10)
-                {
-                    throw new InvalidOperationException("Número máximo de jogadores atingido.");
-                }
+            session.Players ??= new List<Player>();
 
-                session.Players.Add(new Player { Name = playerName });
+            if (session.Players.Any(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Nome de jogador já está em uso na sessão.");
+
+            if (session.Players.Count >= 10)
+                throw new InvalidOperationException("Número máximo de jogadores atingido.");
+
+            if (session.Players.Any(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase)))
                 return;
-            }
-            throw new KeyNotFoundException("Sessão não encontrada.");
+
+            session.Players.Add(new Player { Name = playerName });
         }
 
         public void AddRoll(string sessionId, Roll roll)

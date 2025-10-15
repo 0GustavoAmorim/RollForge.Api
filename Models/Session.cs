@@ -9,7 +9,7 @@ namespace RollForge.Api.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = string.Empty;
-        public List<Player> Players { get; set; } = new List<Player>();
-        public List<Roll> Rolls { get; set; } = new List<Roll>();
+        public List<Player> Players { get; set; } = new();
+        public List<Roll> Rolls { get; set; } = new();
     }
 }
