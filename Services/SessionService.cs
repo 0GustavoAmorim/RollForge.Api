@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using RollForge.Api.Models;
 
@@ -11,15 +12,28 @@ namespace RollForge.Api.Services
     {
         private readonly ConcurrentDictionary<string, Session> _sessions = new();
 
-        public Session CreateSession(string name)
+        public Session CreateSession(string sessionName, string masterName)
         {
+            if (string.IsNullOrWhiteSpace(sessionName))
+                throw new ArgumentException("Nome da sessão não pode ser vazio.", nameof(sessionName));
+
+            if (string.IsNullOrWhiteSpace(masterName))
+                throw new ArgumentException("Nome do mestre não pode ser vazio.", nameof(masterName));
+
             var session = new Session
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = name,
+                Name = sessionName,
+                MasterName = masterName,
                 Players = new List<Player>(),
                 Rolls = new List<Roll>()
             };
+
+            session.Players.Add(new Player
+            {
+                Name = masterName,
+                IsMaster = true
+            });
 
             _sessions.TryAdd(session.Id, session);
             return session;
@@ -44,9 +58,6 @@ namespace RollForge.Api.Services
             if (session.Players.Count >= 10)
                 throw new InvalidOperationException("Número máximo de jogadores atingido.");
 
-            if (session.Players.Any(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase)))
-                return;
-
             session.Players.Add(new Player { Name = playerName });
         }
 
@@ -66,9 +77,17 @@ namespace RollForge.Api.Services
                     .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
-                    session.Players.Remove(player);
+                {
+                    if (player.IsMaster)
+                    {
+                        RemoveSession(sessionId);
+                        return;
+                    }
 
-                if (!session.Players.Any())
+                    session.Players.Remove(player);
+                }
+
+                if (session.Players.Count <= 0)
                     RemoveSession(sessionId);
             }
         }

@@ -46,10 +46,20 @@ app.UseCors();
 app.MapGet("/", () => "RollForge API is running...");
 
 //ENDPOINTS de Sessão
-app.MapPost("/session", (SessionService sessionService, Session session) =>
+app.MapPost("/session", (SessionService sessionService, CreateSessionRequest request) =>
 {
-    var created = sessionService.CreateSession(session.Name);
-    return Results.Ok(created);
+    try
+    {
+        var created = sessionService.CreateSession(request.SessionName, request.MasterName);
+        return Results.Created($"/session/{created.Id}", created);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    } catch (Exception)
+    {
+        return Results.Problem("Erro interno ao criar sessão.");
+    }
 });
 
 app.MapGet("/session/{id}", (SessionService sessionService, string id) =>
@@ -64,24 +74,44 @@ app.MapPost("/session/{id}/join", (SessionService sessionService, string id, Pla
     if (session is null)
         return Results.NotFound("Sessão não encontrada.");
 
-    sessionService.AddPlayer(id, player.Name);
-    return Results.Ok(session);
+    try
+    {
+        sessionService.AddPlayer(id, player.Name);
+        return Results.Ok(session);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Erro interno ao adicionar jogador.");
+    }
 });
 
 app.MapPost("/session/{id}/roll", async (SessionService sessionService, DiceService diceService, IHubContext<GameHub> hub, string id, RollRequest req) =>
 {
-    var session = sessionService.GetSession(id);
-    if (session is null)
-        return Results.NotFound("Sessão não encontrada.");
-
-    if (string.IsNullOrWhiteSpace(req.Name))
-        return Results.BadRequest("Nome do jogador é obrigatório.");
-
-    var roll = await diceService.RollDice(id, req.Name, req.Dice);
-
-    await hub.Clients.Group(id).SendAsync("RollResult", roll);
-
-    return Results.Ok(roll);
+    try
+    {
+        var roll = await diceService.RollDice(id, req.Name, req.Dice);
+        return Results.Ok(roll);
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(ex.Message);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Erro interno ao rolar dados.");
+    }
 });
 
 app.MapPost("/session/{id}/leave", async (SessionService sessionService, IHubContext<GameHub> Hub, string id, Player player) =>

@@ -21,6 +21,23 @@ namespace RollForge.Api.Services
 
         public async Task<Roll> RollDice(string sessionId, string playerName, DiceTypeEnum dice)
         {
+
+            if (string.IsNullOrWhiteSpace(playerName))
+                throw new ArgumentException("Nome do jogador não pode ser vazio.", nameof(playerName));
+
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new ArgumentException("ID da sessão não pode ser vazio.", nameof(sessionId));
+
+            var session = _sessionService.GetSession(sessionId);
+            if (session is null)
+                throw new KeyNotFoundException("Sessão não encontrada.");
+
+            var player = session.Players
+                       .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+
+            if (player is null)
+                throw new InvalidOperationException($"O jogador '{playerName}' não faz parte desta sessão.");
+
             var sides = (int)dice;
             var result = new Random().Next(1, sides + 1);
 
@@ -40,7 +57,8 @@ namespace RollForge.Api.Services
                     player = roll.Player,
                     dice = roll.Dice,
                     result = roll.Result,
-                    timestamp = roll.Timestamp
+                    timestamp = roll.Timestamp,
+                    message = $"{roll.Player} rolou um {roll.Dice} e tirou {roll.Result}."
                 });
 
             return roll;

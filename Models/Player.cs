@@ -8,5 +8,6 @@ namespace RollForge.Api.Models
     public class Player
     {
         public string Name { get; set; } = string.Empty;
+        public bool IsMaster { get; set; } = false;
     }
 }
